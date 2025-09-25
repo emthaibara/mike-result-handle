@@ -1,39 +1,32 @@
+import json
+import os
+import shutil
 from os import path
 import mikeio
+import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
-# 定义文件所在的根目录
-location = r'C:\Users\Administrator\Desktop\mike-result-handle\assets\generated\pump-simulation\z0-1-[2605.0]\q1-6-[520.0]\q2-1-[-625.0]\q3-8-[-750.0]\LHKHX.m21fm - Result Files'
-
-base_path = path.join(path.dirname(path.dirname(__file__)),'assets','generated')
-dataset_base_path = path.join(path.dirname(path.dirname(__file__)),'dataset')
-type_map = {
-    '抽水':'pump-simulation',
-    '发电':'gen-simulation',
-    '不抽不发':'nothing-simulation'
-}
-def processed_result(case_id: int):
-    lhk_location = path.join(base_path, type_map[cases[case_id]['type']], cases[case_id]['path'], 'LHKHX.m21fm - Result Files', 'lhk.dfs0')
-    lhkhx_location = path.join(base_path, type_map[cases[case_id]['type']], cases[case_id]['path'], 'LHKHX.m21fm - Result Files', 'lhkhx.dfs0')
-    ygyj_location = path.join(base_path, type_map[cases[case_id]['type']], cases[case_id]['path'], 'LHKHX.m21fm - Result Files', 'ygyj.dfs0')
-    z_location = path.join(base_path, type_map[cases[case_id]['type']], cases[case_id]['path'], 'LHKHX.m21fm - Result Files', 'z.dfs0')
-
-
-
-
-
-    # 1. 读取所有 dfs0 文件并转换为 pandas DataFrame
-    print("开始加载 dfs0 文件...")
-    df_lhk = mikeio.read(path.join(location, 'lhk.dfs0')).to_dataframe()
+def gen(
+        case_id : int,
+        base_location : str,
+        dataset_location : str):
+    """ 读取原始数据并重命名列名称,z.dfs0除外 """
+    case_result_path = path.join(base_location, cases_dict[case_id]['path'], 'LHKHX.m21fm - Result Files')
+    df_lhk = mikeio.read(path.join(case_result_path, 'lhk.dfs0')).to_dataframe()
     df_lhk.columns = [f'{col}_lhk' for col in df_lhk.columns]
 
-    df_lhkhx = mikeio.read(path.join(location, 'lhkhx.dfs0')).to_dataframe()
+    df_lhkhx = mikeio.read(path.join(case_result_path, 'lhkhx.dfs0')).to_dataframe()
     df_lhkhx.columns = [f'{col}_lhkhx' for col in df_lhkhx.columns]
 
-    df_ygyj = mikeio.read(path.join(location, 'ygyj.dfs0')).to_dataframe()
+    df_ygyj = mikeio.read(path.join(case_result_path, 'ygyj.dfs0')).to_dataframe()
     df_ygyj.columns = [f'{col}_ygyj' for col in df_ygyj.columns]
 
-    df_z = mikeio.read(path.join(location, 'z.dfs0')).to_dataframe()
+    df_z = mikeio.read(path.join(case_result_path, 'z.dfs0')).to_dataframe()
+
+
+    """ 接下来合并四个df, 为新df列命名 """
+    output_columns = ['q1_origin', 'q2_origin', 'q3_origin', 'q1', 'q2', 'q3']
 
     cross_sections = [
         'YG63LHK: Surface elevation', 'YG62-1.5: Surface elevation', 'YG62-1: Surface elevation',
@@ -57,45 +50,124 @@ def processed_result(case_id: int):
         'YG45-1: Surface elevation', 'YG44YGYJ: Surface elevation'
     ]
 
+    all_columns = output_columns + cross_sections
+
+    missing_cols = [col for col in cross_sections if col not in df_z.columns]
+    if missing_cols:
+        print(f"错误：在 {path.join(case_result_path, 'z.dfs0')} 中找不到以下列：{missing_cols}")
+        return
+    """ 合并 """
     master_df = df_lhk.merge(df_lhkhx, left_index=True, right_index=True, how='outer')
     master_df = master_df.merge(df_ygyj, left_index=True, right_index=True, how='outer')
     master_df = master_df.merge(df_z, left_index=True, right_index=True, how='outer')
 
-    print("文件加载和数据对齐完成。")
-    output_df = pd.DataFrame(index=df_z.index, columns=cross_sections)
-    # 遍历每一个时间点
-    for time_index, row in master_df.iterrows():
-        for section_name in cross_sections:
-            # 使用重命名后的列名来获取数据
-            val_lhk_1 = row[df_lhk.columns[0]]
-            val_lhk_2 = row[df_lhk.columns[1]]
-            val_lhkhx_1 = row[df_lhkhx.columns[0]]
-            val_lhkhx_2 = row[df_lhkhx.columns[1]]
-            val_ygyj_1 = row[df_ygyj.columns[0]]
-            val_ygyj_2 = row[df_ygyj.columns[1]]
-            # 获取 z.dfs0 对应截面的值，使用原始列名
-            val_z = row[section_name]
+    output_df = pd.DataFrame(index=master_df.index, columns=all_columns)
 
-            # 组合成元组并赋值给新 DataFrame
-            output_df.loc[time_index, section_name] = (
-                val_lhk_1, val_lhk_2,
-                val_lhkhx_1, val_lhkhx_2,
-                val_ygyj_1, val_ygyj_2,
-                val_z
-            )
-    print("新 DataFrame 构建完成。")
-    # 5. 导出为 CSV
-    output_df.to_csv(path.join(location, f'case_{case_id}_result.csv'), index=True, index_label='time',
-                     encoding='utf-8')
-    output_df.to_excel(path.join(location, f'case_{case_id}_result.xlsx'), index=True, index_label='time', engine='openpyxl')
-    print(f"结果已成功保存到 {path.join(location, f'case_{case_id}_result.csv')}")
+    """ qx_origin代表原始qx流量 """
+    q1_origin = cases_dict[case_id]['q1-flow_rate']
+    q2_origin = cases_dict[case_id]['q2-flow_rate']
+    q3_origin = cases_dict[case_id]['q3-flow_rate']
+    output_df['q1_origin'] = q1_origin
+    output_df['q2_origin'] = q2_origin
+    output_df['q3_origin'] = q3_origin
 
-cases = dict()
-def load_cases():
-    pass
+    output_df['q1'] = master_df[df_lhk.columns[0]].round(1)
+    if q2_origin == 0 :
+        output_df['q2'] = 0
+    elif q2_origin < 0 :
+        output_df['q2'] = -master_df[df_lhkhx.columns[0]].round(1)
+    elif q2_origin > 0 :
+        output_df['q2'] = master_df[df_lhkhx.columns[0]].round(1)
 
-processed_result(470)
+    if q3_origin < 0 :
+        output_df['q3'] = -master_df[df_ygyj.columns[0]].round(1)
+    elif q3_origin > 0 :
+        output_df['q3'] = master_df[df_ygyj.columns[0]].round(1)
 
+    for section_name in cross_sections:
+        output_df[section_name] = master_df[section_name]
+    output_df.to_csv(path.join(dataset_location, f'{case_id}.csv'), index=True, index_label='time', encoding='utf-8')
 
+def move_only_csv_files(source_folder, destination_folder):
+    if not os.path.isdir(source_folder):
+        print(f"错误: 源文件夹 '{source_folder}' 不存在或不是一个目录。")
+        return False
+    if not os.path.exists(destination_folder):
+        try:
+            os.makedirs(destination_folder)
+            print(f"创建目标文件夹: '{destination_folder}'")
+        except OSError as e:
+            print(f"错误: 无法创建目标文件夹 '{destination_folder}' - {e}")
+            return False
+    print(f"开始移动 '{source_folder}' 中的 .csv 文件到 '{destination_folder}'...")
+    for item in os.listdir(source_folder):
+        source_path = os.path.join(source_folder, item)
+        destination_path = os.path.join(destination_folder, item)
+
+        # 核心逻辑：判断是否是文件且文件扩展名是否为 .csv
+        if os.path.isfile(source_path) and item.endswith('.csv'):
+            try:
+                shutil.move(source_path, destination_path)
+                print(f"已移动 .csv 文件: {item}")
+            except Exception as e:
+                print(f"移动文件 '{item}' 时发生错误: {e}")
+    print("所有 .csv 文件移动完成。")
+    return True
+
+""" pump cases需要去掉第一个步长的数据,即为2023-01-01 09:00:00的数据 """
+def clip(start_id : int,
+         end_id : int,
+         location : str):
+    for cid in tqdm(range(start_id, end_id + 1),
+                    desc='正在批量截取数据集的第一行数据'):
+        df = pd.read_csv(path.join(location, f'{cid}.csv'), encoding='utf-8')
+        df['time'] = pd.to_datetime(df['time'])
+        df_filtered = df[df['time'] != '2023-01-01 09:00:00']
+        df_filtered.to_csv(path.join(location, f'{cid}.csv'), index=False)
+
+cases_location = r'C:\Users\lemt\PycharmProjects\mike-result-handle\assets\cases.json'
+cases_dict = dict()
+def batch_gen_dataset(start_id : int,
+                      end_id : int,
+                      base_location : str,
+                      dataset_location : str):
+    for case_id in tqdm(range(start_id, end_id + 1),
+                        desc=f'正在批量生成数据集【编号{start_id}-{end_id}】'):
+        gen(case_id, base_location, dataset_location)
+
+def init():
+    cases = json.load(open(cases_location, 'r', encoding='utf-8'))
+    cases_list = cases["cases"]
+    global cases_dict
+    cases_dict = {item['case_id']: item for item in cases_list}
+
+if __name__ == '__main__':
+    __base_location = r'E:\mike-simulation-result-set\pump-0-4031'
+    __dataset_location = r'C:\Users\lemt\PycharmProjects\mike-result-handle\assets\dataset\batch-one\pump-0-4031'
+    init()
+    batch_gen_dataset(0,
+                      4031,
+                      __base_location,
+                      __dataset_location)
+    clip(0,
+         4031,
+         __dataset_location)
+
+    # __base_location = r'Y:\mike-simulation-result-set\do_nothing-8064-11199'
+    # __dataset_location = r'C:\Users\lemt\PycharmProjects\mike-result-handle\assets\dataset\batch-one\do_nothing-8064-11199'
+    # batch_gen_dataset(8064,
+    #                   11199,
+    #                   __base_location,
+    #                   __dataset_location)
+    #
+    # __base_location = r'Y:\mike-simulation-result-set\gen-11200-15199'
+    # __dataset_location = r'C:\Users\lemt\PycharmProjects\mike-result-handle\assets\dataset\batch-one\gen-11200-15199'
+    # batch_gen_dataset(11200,
+    #                   15199,
+    #                   __base_location,
+    #                   __dataset_location)
+    # clip(11200,
+    #      15199,
+    #      __dataset_location)
 
 
