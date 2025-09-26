@@ -59,6 +59,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\assets\dataset\euclidean_distance_m.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\euclidean_distance_matrix_km.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\assets\dataset\inter_section_distance_km.csv">
           <value>
             <Attribute>
@@ -67,6 +81,20 @@
           </value>
         </entry>
         <entry key="\assets\dataset\inter_section_distance_m.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\section_distance_along_the_way_km.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\section_distance_along_the_way_m.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
