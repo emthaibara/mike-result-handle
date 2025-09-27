@@ -3,56 +3,7 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\assets\dataset\batch-one\10.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\10164.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\13464.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\14469.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\1710.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\180.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\3208.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\batch-one\856.csv">
+        <entry key="\assets\dataset\batch-one\3325.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -60,27 +11,6 @@
           </value>
         </entry>
         <entry key="\assets\dataset\euclidean_distance_m.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\euclidean_distance_matrix_km.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\inter_section_distance_km.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\assets\dataset\inter_section_distance_m.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -212,32 +212,32 @@ def section_matrix():
     df_km.to_csv(csv_file_km, float_format='%.1f', encoding='utf-8')
 
 if __name__ == '__main__':
-    section_matrix()
-    # __base_location = r'F:\mike-simulation-result-set\pump-0-4031'
-    # __dataset_location = r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one'
-    # init()
-    #
-    # batch_gen_dataset(0,
-    #                   4031,
-    #                   __base_location,
-    #                   __dataset_location)
-    # clip(0,
-    #      4031,
-    #      __dataset_location)
-    #
-    # __base_location = r'F:\mike-simulation-result-set\do_nothing-8064-11199'
-    # batch_gen_dataset(8064,
-    #                   11199,
-    #                   __base_location,
-    #                   __dataset_location)
-    #
-    # __base_location = r'F:\mike-simulation-result-set\gen-11200-15199'
-    # batch_gen_dataset(11200,
-    #                   15199,
-    #                   __base_location,
-    #                   __dataset_location)
-    # clip(11200,
-    #      15199,
-    #      __dataset_location)
+    # section_matrix()
+    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\pump-0-4031'
+    __dataset_location = r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one'
+    init()
+
+    batch_gen_dataset(0,
+                      4031,
+                      __base_location,
+                      __dataset_location)
+    clip(0,
+         4031,
+         __dataset_location)
+
+    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\do_nothing-8064-11199'
+    batch_gen_dataset(8064,
+                      11199,
+                      __base_location,
+                      __dataset_location)
+
+    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\gen-11200-15199'
+    batch_gen_dataset(11200,
+                      15199,
+                      __base_location,
+                      __dataset_location)
+    clip(11200,
+         15199,
+         __dataset_location)
 
 
