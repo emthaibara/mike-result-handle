@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import threading
 from os import path
 import mikeio
 import numpy as np
@@ -26,7 +27,7 @@ def gen(
 
 
     """ 接下来合并四个df, 为新df列命名 """
-    output_columns = ['q1_origin', 'q2_origin', 'q3_origin', 'q1', 'q2', 'q3']
+    output_columns = ['q1_input', 'q2_input', 'q3_input', 'q1_output', 'q2_output', 'q3_output']
 
     cross_sections = [
         'YG63LHK: Surface elevation', 'YG62-1.5: Surface elevation', 'YG62-1: Surface elevation',
@@ -71,22 +72,22 @@ def gen(
     q1_origin = cases_dict[case_id]['q1-flow_rate']
     q2_origin = cases_dict[case_id]['q2-flow_rate']
     q3_origin = cases_dict[case_id]['q3-flow_rate']
-    output_df['q1_origin'] = q1_origin
-    output_df['q2_origin'] = q2_origin
-    output_df['q3_origin'] = q3_origin
+    output_df['q1_input'] = q1_origin
+    output_df['q2_input'] = q2_origin
+    output_df['q3_input'] = q3_origin
 
-    output_df['q1'] = master_df[df_lhk.columns[0]].abs().round(1)
+    output_df['q1_output'] = master_df[df_lhk.columns[0]].abs().round(1)
 
     if q2_origin == 0:
-        output_df['q2'] = 0.0
+        output_df['q2_output'] = 0.0
     else:
         q2_sim = master_df[df_lhkhx.columns[0]].abs().round(1)
         if q2_origin < 0:
-            output_df['q2'] = -q2_sim
+            output_df['q2_output'] = -q2_sim
         elif q2_origin > 0:
-            output_df['q2'] = q2_sim
+            output_df['q2_output'] = q2_sim
 
-    output_df['q3'] = -master_df[df_ygyj.columns[0]].abs().round(1)
+    output_df['q3_output'] = -master_df[df_ygyj.columns[0]].abs().round(1)
 
     for section_name in cross_sections:
         output_df[section_name] = master_df[section_name].round(3)
@@ -129,115 +130,137 @@ def init():
     global cases_dict
     cases_dict = {item['case_id']: item for item in cases_list}
 
-def section_matrix():
-    section_distance_data = [
-        ('YG63LHK', 0.2), ('YG62-1.5', 0.5), ('YG62-1', 0.8), ('YG62-0.5', 1.0), ('YG62', 1.2),
-        ('YG61-2.5', 1.3), ('YG61-2', 1.5), ('YG61-1.5', 1.6), ('YG61-1', 1.8), ('YG61-0.9HX', 1.9),
-        ('YG61-0.75', 2.0), ('YG61-0.5', 2.1), ('YG61-0.25', 2.2), ('YG61', 2.3), ('YG60-1.75', 2.5),
-        ('YG60-1.5', 2.7), ('YG60-1.25', 2.9), ('YG60-1', 3.0), ('YG60-0.5', 3.3), ('YG60', 3.5),
-        ('YG59-0.5', 3.7), ('YG58-1', 3.9), ('YG59-2', 4.2), ('YG59', 4.6), ('YG58-1', 5.1),
-        ('YG58', 5.5), ('YG57-1', 5.9), ('YG57-2', 6.4), ('YG57', 6.8), ('YG56-1', 7.3),
-        ('YG56', 7.8), ('YG55-1', 8.2), ('YG55', 8.6), ('YG54-1', 9.2), ('YG54', 9.9),
-        ('YG53-2', 10.3), ('YG53-1', 10.7), ('YG53', 11.0), ('YG52-1', 11.6), ('YG52', 12.3),
-        ('YG51-1', 12.7), ('YG51', 13.2), ('YG50-1', 13.6), ('YG50', 14.0), ('YG49-1', 14.4),
-        ('YG49', 14.9), ('YG48-1', 15.4), ('YG48', 16.0), ('YG47-2', 16.3), ('YG47', 16.8),
-        ('YG47-1', 17.3), ('YG46', 17.8), ('YG46-1', 18.3), ('YG45-1', 18.9), ('YG45', 19.3),
-        ('YG44YGY', 19.5)
-    ]
-    section_point_data = [
-        ('YG63LHK', 269025.47, 3742385.49), ('YG62-1.5', 269061.84, 3742137.24), ('YG62-1', 269104.79, 3741865.62),
-        ('YG62-0.5', 269023.87, 3741608.03), ('YG62', 269001.44, 3741467.83), ('YG61-2.5', 269049.20, 3741308.93),
-        ('YG61-2', 269100.51, 3741190.69), ('YG61-1.5', 269217.13, 3741073.39), ('YG61-1', 269325.96, 3740986.03),
-        ('YG61-0.9HX', 269409.75, 3741031.69), ('YG61-0.75', 269451.12, 3740853.87),
-        ('YG61-0.5', 269506.00, 3740766.95),
-        ('YG61-0.25', 269551.89, 3740623.33), ('YG61', 269556.03, 3740482.84), ('YG60-1.75', 269490.09, 3740318.31),
-        ('YG60-1.5', 269409.51, 3740158.92), ('YG60-1.25', 269305.36, 3740041.46), ('YG60-1', 269209.09, 3739889.26),
-        ('YG60-0.5', 269053.05, 3739685.16), ('YG60', 268919.82, 3739476.30), ('YG59-0.5', 268832.45, 3739996.60),
-        ('YG58-1', 268746.06, 3739100.14), ('YG59-2', 268649.77, 3738843.33), ('YG59', 268506.24, 3738531.31),
-        ('YG58-1', 268231.40, 3738138.69), ('YG58', 267851.96, 3737914.43), ('YG57-1', 267547.56, 3737716.21),
-        ('YG57-2', 267688.57, 3737265.74), ('YG57', 267855.26, 3736816.18), ('YG56-1', 267602.80, 3736282.34),
-        ('YG56', 267533.59, 3735809.92), ('YG55-1', 267445.63, 3735413.68), ('YG55', 267349.74, 3735037.58),
-        ('YG54-1', 267411.35, 3734497.89), ('YG54', 267996.18, 3734128.87), ('YG53-2', 268834.62, 3734026.49),
-        ('YG53-1', 268658.98, 3733866.58), ('YG53', 268888.28, 3733642.17), ('YG52-1', 269500.43, 3733578.18),
-        ('YG52', 270124.84, 3733571.19), ('YG51-1', 270433.90, 3733772.34), ('YG51', 271028.25, 3733754.68),
-        ('YG50-1', 271077.19, 3733391.61), ('YG50', 270886.89, 3733066.72), ('YG49-1', 270475.23, 3732872.68),
-        ('YG49', 270035.92, 3732820.53), ('YG48-1', 269468.21, 3732757.47), ('YG48', 269091.97, 3732544.99),
-        ('YG47-2', 269141.71, 3732133.28), ('YG47', 269034.05, 3731712.22), ('YG47-1', 268472.48, 3731712.10),
-        ('YG46', 268011.37, 3731597.97), ('YG46-1', 268124.50, 3731123.31), ('YG45-1', 268491.42, 3730761.85),
-        ('YG45', 268611.04, 3730335.80), ('YG44YGY', 268543.22, 3730146.31)
-    ]
-
-    base_location = r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset'
-    """ 
-        两种方式计算断面点之间的间距：
-                    1. 根据【据两河口坝址距离km】做差取绝对值，得到两个断面点之间的沿程距离
-                    2. 根据【（X,Y）】两点间距离公式计算，得到两个断面点的直线距离
-    """
+def section_matrix(base_location):
+    section_info_df = pd.read_csv(os.path.join(base_location, 'sections-info.csv'))
+    section_distance_data = []
+    section_point_data = []
+    for row in section_info_df.itertuples(index=False):
+        name, x, y, d = row[0], row[1], row[2], row[3]
+        section_distance_data.append((name, d))
+        section_point_data.append((name, x, y))
+    # ====================================================================
+    # I. 沿程距离矩阵 (|D - D^T|)
+    # ====================================================================
     """ 两个断面点与两河口水坝的距离（沿程距离）做差取绝对值 【以下一个是km单位的版本，一个是米为单位的版本】"""
     index_labels = [f"P{i + 1} ({name})" for i, (name, d) in enumerate(section_distance_data)]
     distances_km = np.array([d for name, d in section_distance_data])
-    distance_matrix_km = np.abs(distances_km[:, np.newaxis] - distances_km)
-    df_km = pd.DataFrame(distance_matrix_km, index=index_labels, columns=index_labels)
-    csv_file_km = path.join(base_location,'section_distance_along_the_way_km.csv')
-    df_km.to_csv(csv_file_km, float_format='%.1f', encoding='utf-8')
-    """ km """
-    distance_matrix_m = distance_matrix_km * 1000
-    df_m = pd.DataFrame(distance_matrix_m, index=index_labels, columns=index_labels)
-    csv_file_m = path.join(base_location, 'section_distance_along_the_way_m.csv')
-    df_m.to_csv(csv_file_m, float_format='%.2f', encoding='utf-8')
+    raw_distance_matrix_km = np.abs(distances_km[:, np.newaxis] - distances_km)
+    """ m """
+    final_matrix_dist_km_w = apply_inverse_and_direction(raw_distance_matrix_km, dtype_conversion=1000)
+    df_km_w = pd.DataFrame(final_matrix_dist_km_w, index=index_labels, columns=index_labels)
+    csv_file_km_w = path.join(base_location, 'dataset','section_distance_along_the_way_m.csv')
+    df_km_w.to_csv(csv_file_km_w, float_format='%.6f', encoding='utf-8')
 
+    """ km """
+    final_matrix_dist_m_w = apply_inverse_and_direction(raw_distance_matrix_km, dtype_conversion=1)
+    df_m_w = pd.DataFrame(final_matrix_dist_m_w, index=index_labels, columns=index_labels)
+    csv_file_m_w = path.join(base_location, 'dataset','section_distance_along_the_way_km.csv')
+    df_m_w.to_csv(csv_file_m_w, float_format='%.4f', encoding='utf-8')
+
+    # ====================================================================
+    # II. 欧几里得距离矩阵 (D_euclidean) d = √((x₂ - x₁)² + (y₂ - y₁)² )
+    # ====================================================================
     """ 坐标两点距离公式 【以下一个是km单位的版本，一个是米为单位的版本】"""
     index_labels = [f"P{i + 1} ({name})" for i, (name, x, y) in enumerate(section_point_data)]
     x_coords = np.array([x for name, x, y in section_point_data])
     y_coords = np.array([y for name, x, y in section_point_data])
     dx_sq = (x_coords[:, np.newaxis] - x_coords) ** 2
     dy_sq = (y_coords[:, np.newaxis] - y_coords) ** 2
-    """ m """
-    euclidean_distance_matrix_m = np.sqrt(dx_sq + dy_sq)
-    df_euclidean = pd.DataFrame(
-        euclidean_distance_matrix_m,
-        index=index_labels,
-        columns=index_labels
-    )
-    csv_file_name = path.join(base_location, 'euclidean_distance_m.csv')
-    df_euclidean.to_csv(csv_file_name, float_format='%.2f', encoding='utf-8')
     """ km """
-    euclidean_distance_matrix_km = euclidean_distance_matrix_m / 1000
-    df_km = pd.DataFrame(
-        euclidean_distance_matrix_km,
-        index=index_labels,
-        columns=index_labels
-    )
-    csv_file_km = path.join(base_location, 'euclidean_distance_km.csv')
-    df_km.to_csv(csv_file_km, float_format='%.1f', encoding='utf-8')
+    raw_euclidean_distance_matrix_m = np.sqrt(dx_sq + dy_sq)
+    final_matrix_euclidean_m = apply_inverse_and_direction(raw_euclidean_distance_matrix_m, dtype_conversion=1/1000)
+    df_euclidean_m = pd.DataFrame(final_matrix_euclidean_m, index=index_labels, columns=index_labels)
+    csv_file_euclidean_m = os.path.join(base_location, 'dataset','euclidean_distance_km.csv')
+    df_euclidean_m.to_csv(csv_file_euclidean_m, float_format='%.4f', encoding='utf-8')
+
+    """ m """
+    final_matrix_euclidean_km = apply_inverse_and_direction(raw_euclidean_distance_matrix_m, dtype_conversion=1)
+    df_euclidean_km = pd.DataFrame(final_matrix_euclidean_km, index=index_labels, columns=index_labels)
+    csv_file_euclidean_km = os.path.join(base_location, 'dataset', 'euclidean_distance_m.csv')
+    df_euclidean_km.to_csv(csv_file_euclidean_km, float_format='%.6f', encoding='utf-8')
+
+
+def apply_inverse_and_direction(raw_matrix, dtype_conversion=1.0):
+    matrix = raw_matrix * dtype_conversion
+    n = matrix.shape[0]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        inverse_matrix = np.nan_to_num(1.0 / matrix, posinf=0.0, neginf=0.0, nan=0.0)
+    result_matrix = np.zeros_like(matrix)
+    triu_indices = np.triu_indices(n, k=1)
+    result_matrix[triu_indices] = inverse_matrix[triu_indices]
+    tril_indices_mirror = (triu_indices[1], triu_indices[0])
+    result_matrix[tril_indices_mirror] = -inverse_matrix[tril_indices_mirror]
+    np.fill_diagonal(result_matrix, 15.0)
+    return result_matrix
+
+def process_csv_files(root_dir, null_dir_name, null_values):
+    null_dir_path = os.path.join(root_dir, null_dir_name)
+    if not os.path.exists(null_dir_path):
+        os.makedirs(null_dir_path)
+        print(f"已创建目标文件夹: {null_dir_path}")
+    for filename in os.listdir(root_dir):
+        if filename.endswith(".csv") and os.path.isfile(os.path.join(root_dir, filename)):
+            file_path = os.path.join(root_dir, filename)
+            if file_path.startswith(null_dir_path):
+                continue
+            print(f"\n--- 正在检查文件: {filename} ---")
+            df = pd.read_csv(
+                file_path,
+                na_values=null_values,
+                keep_default_na=True,
+                encoding='utf-8'  # 尝试常见的编码，如果你的文件有编码问题可能需要更改
+            )
+            has_null = df.isnull().any(axis=None)
+            if has_null:
+                new_file_path = os.path.join(null_dir_path, filename)
+                shutil.move(file_path, new_file_path)
+                print(f"  **发现缺失值**，已移动到: {new_file_path}")
+            else:
+                print("  未发现缺失值。")
 
 if __name__ == '__main__':
-    # section_matrix()
-    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\pump-0-4031'
-    __dataset_location = r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one'
-    init()
+    NULL_VALUES = ['<null>', 'NULL', 'null', '', '#N/A', 'NA', 'NaN']
+    TARGET_DIR = r"C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\do_nothing-8064-11199"
+    NULL_DIR_NAME = "exist_null"
+    process_csv_files(TARGET_DIR, NULL_DIR_NAME, NULL_VALUES)
+    # section_matrix(r'C:\Users\Administrator\Desktop\mike-result-handle\assets')
+    # init()
+    # batch_gen_dataset(
+    #     0,
+    #     4031,
+    #     r'C:\Users\Administrator\Desktop\mike-simulation-result-set\pump-0-4031',
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\pump-0-4031'
+    # )
+    # clip(
+    #     0,
+    #     4031,
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\pump-0-4031'
+    # )
 
-    batch_gen_dataset(0,
-                      4031,
-                      __base_location,
-                      __dataset_location)
-    clip(0,
-         4031,
-         __dataset_location)
 
-    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\do_nothing-8064-11199'
-    batch_gen_dataset(8064,
-                      11199,
-                      __base_location,
-                      __dataset_location)
+    # batch_gen_dataset(
+    #     8064,
+    #     11199,
+    #     r'C:\Users\Administrator\Desktop\mike-simulation-result-set\do_nothing-8064-11199',
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\do_nothing-8064-11199'
+    # )
+    # clip(
+    #     8064,
+    #     11199,
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\do_nothing-8064-11199'
+    # )
 
-    __base_location = r'C:\Users\Administrator\Desktop\mike-simulation-result-set\gen-11200-15199'
-    batch_gen_dataset(11200,
-                      15199,
-                      __base_location,
-                      __dataset_location)
-    clip(11200,
-         15199,
-         __dataset_location)
+    # batch_gen_dataset(
+    #     11200,
+    #     15199,
+    #     r'C:\Users\Administrator\Desktop\mike-simulation-result-set\gen-11200-15199',
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\gen-11200-15199'
+    # )
+    # clip(
+    #     11200,
+    #     15199,
+    #     r'C:\Users\Administrator\Desktop\mike-result-handle\assets\dataset\batch-one\gen-11200-15199'
+    # )
+
 
 

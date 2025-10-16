@@ -3,7 +3,91 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\assets\dataset\batch-one\3325.csv">
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\10646.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\10647.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\10862.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\10894.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\8065.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\8136.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\do_nothing-8064-11199\exist_null\10648.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\pump-0-4031\0.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\pump-0-4031\13.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\pump-0-4031\2.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\pump-0-4031\5.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\batch-one\pump-0-4031\9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\dataset\euclidean_distance_km.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -25,6 +109,13 @@
           </value>
         </entry>
         <entry key="\assets\dataset\section_distance_along_the_way_m.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\assets\sections-info.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
